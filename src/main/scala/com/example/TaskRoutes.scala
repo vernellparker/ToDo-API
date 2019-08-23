@@ -27,6 +27,9 @@ trait TaskRoutes extends JsonSupport {
 
   lazy val log = Logging(system, classOf[TaskRoutes])
 
+  private val cors = new CORSHandler {} //Cache this somewhere
+
+
   // other dependencies that UserRoutes use
   def taskRegistryActor: ActorRef
 
@@ -44,7 +47,7 @@ trait TaskRoutes extends JsonSupport {
                 //#tasks-get-all
                 val tasks: Future[Tasks] =
                   (taskRegistryActor ? GetTasks).mapTo[Tasks]
-                complete(tasks)
+                  cors.corsHandler(complete(tasks))
               }
             )
           }
@@ -61,7 +64,7 @@ trait TaskRoutes extends JsonSupport {
                     (taskRegistryActor ? CreateTask(task)).mapTo[ActionPerformed]
                   onSuccess(taskCreated) { performed =>
                     log.info("Created task [{}]: {}", task.title, performed.description)
-                    complete((StatusCodes.Created, performed))
+                   cors.corsHandler(complete((StatusCodes.Created, performed)))
                   }
                 }
               }
@@ -74,7 +77,7 @@ trait TaskRoutes extends JsonSupport {
                 val maybeTask: Future[Option[Task]] =
                   (taskRegistryActor ? GetTask(taskId.toInt)).mapTo[Option[Task]]
                 rejectEmptyResponse {
-                  complete(maybeTask)
+                 cors.corsHandler(complete(maybeTask))
                 }
               },
               delete {
@@ -83,7 +86,7 @@ trait TaskRoutes extends JsonSupport {
                   (taskRegistryActor ? DeleteTask(taskId.toInt)).mapTo[ActionPerformed]
                 onSuccess(taskDeleted) { performed =>
                   log.info("Deleted task [{}]: {}", taskId, performed.description)
-                  complete((StatusCodes.OK, performed))
+                  cors.corsHandler(complete((StatusCodes.OK, performed)))
                 }
               }
             )
