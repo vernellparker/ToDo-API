@@ -91,7 +91,5 @@ trait TaskRoutes extends JsonSupport {
         )
       }
     }
-
-
   //#all-routes
 }
